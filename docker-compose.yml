@@ -1,0 +1,106 @@
+version: '3.7'
+
+services:
+
+  geth:
+    command: |
+      geth 
+      --cache 4096
+      --gcmode full
+      --graphql
+      --graphql.addr 0.0.0.0
+      --graphql.corsdomain '*'
+      --graphql.vhosts '*'
+      --metrics
+      --metrics.expensive
+      --pprof
+      --pprofaddr 0.0.0.0
+      --rpc
+      --rpcaddr 0.0.0.0
+      --rpcapi admin,debug,eth,mining,net,personal,txpool,web3b
+      --rpccorsdomain '*'
+      --syncmode fast
+      --txpool.pricelimit 0
+      --txpool.accountslots 100
+      --txpool.globalslots 100000
+      --txpool.accountqueue 200
+      --txpool.globalqueue 100000
+      --ws
+      --wsaddr 0.0.0.0
+      --wsapi admin,debug,eth,mining,net,personal,txpool,web3b
+      --wsorigins '*'
+    image: ethereum/client-go:alltools-v1.9.12
+    ports:
+      - "8545:8545"    # rpc
+      - "8546:8546"    # websocket
+      - "8547:8547"    # graphql
+      - "6060:6060"    # pprof
+      - "30303:30303"  # network
+    restart: always
+    volumes:
+      - geth-data:/root/.ethereum:rw
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    restart: always
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data:rw
+    ports:
+      - 9200:9200
+
+#   logstash:
+#     image: docker.elastic.co/logstash/logstash:7.2.0
+#     container_name: logstash
+#     depends_on:
+#       - elasticsearch
+#       - kibana
+#     volumes:
+#       - $PWD/logstash-pipeline/:/usr/share/logstash/pipeline
+#       - $PWD/logstash-templates/:/usr/share/logstash/templates
+#       - logstash-data:/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.1
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - 5601:5601
+    restart: always
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:7.6.1
+    command: ["-e", "--strict.perms=false", "-system.hostfs=/hostfs"]
+    container_name: metricbeat
+    user: root
+    #pid: host
+    network_mode: host
+    restart: always
+    depends_on:
+      - elasticsearch
+      - kibana
+    volumes:
+      - $PWD/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+
+volumes:
+#   logstash-data:
+#     driver: local
+  geth-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
