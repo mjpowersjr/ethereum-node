@@ -10,6 +10,9 @@ services:
       #--ws.addr 0.0.0.0
       #--ws.api admin,debug,eth,mining,net,personal,txpool,web3b
       #--ws.origins '*'
+      #--gcmode archive
+      #--syncmode full
+      #--txlookuplimit 1
     command: |
       geth 
       --cache 4096
@@ -32,7 +35,7 @@ services:
       --rpcapi admin,debug,eth,mining,net,personal,txpool,web3b
       --rpccorsdomain '*'
       --rpcvhosts '*'
-      --syncmode full
+      --syncmode fast
       --txpool.pricelimit 0
       --txpool.accountslots 100
       --txpool.globalslots 100000
@@ -42,7 +45,7 @@ services:
       --wsaddr 0.0.0.0
       --wsapi admin,debug,eth,mining,net,personal,txpool,web3b
       --wsorigins '*'
-    image: ethereum/client-go:alltools-v1.9.15
+    image: ethereum/client-go:alltools-v1.9.17
     ports:
       - "8545:8545"    # rpc
       - "8546:8546"    # websocket
