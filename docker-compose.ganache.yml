@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  ganache:
+    command: |
+      --fork 
+      http://geth:8545 
+      --networkId 1 
+      --port 7545 
+    image: trufflesuite/ganache-cli:latest
+    ports:
+      - "7545:7545"    # rpc
+    restart: never

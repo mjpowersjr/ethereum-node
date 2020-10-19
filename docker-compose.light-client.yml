@@ -1,0 +1,59 @@
+version: '3.7'
+
+services:
+
+  geth-light-client:
+    command: |
+      geth 
+      --cache 4096
+      --graphql
+      --graphql.addr 0.0.0.0
+      --graphql.corsdomain '*'
+      --graphql.vhosts '*'
+      --maxpeers 100
+      --metrics
+      --metrics.expensive
+      --nousb
+      --port 9303
+      --pprof
+      --pprofaddr 0.0.0.0
+      --rpc
+      --rpcaddr 0.0.0.0
+      --rpcapi admin,debug,eth,mining,net,personal,txpool,web3b
+      --rpccorsdomain '*'
+      --rpcport 9545
+      --rpcvhosts '*'
+      --syncmode light
+      --txpool.pricelimit 0
+      --txpool.accountslots 100
+      --txpool.globalslots 100000
+      --txpool.accountqueue 200
+      --txpool.globalqueue 100000
+      --ws
+      --wsaddr 0.0.0.0
+      --wsapi admin,debug,eth,net,personal,txpool
+      --wsorigins '*'
+    image: ethereum/client-go:alltools-v1.9.17
+    ports:
+      - "9545:9545"    # rpc
+      - "9546:8546"    # websocket
+      - "9547:8547"    # graphql
+      - "9060:8060"    # pprof
+      - "9303:9303"    # network
+    restart: always
+
+  openethereum-light-client:
+    command: |
+      --no-download
+      --light
+      --port 9303
+      --jsonrpc-interface=all
+      --jsonrpc-port=9545
+    image: openethereum/openethereum:latest
+    ports:
+      - "9545:9545"    # rpc
+      - "9546:8546"    # websocket
+      - "9547:8547"    # graphql
+      - "9060:8060"    # pprof
+      - "9303:9303"    # network
+    restart: always

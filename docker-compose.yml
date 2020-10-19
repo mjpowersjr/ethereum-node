@@ -36,11 +36,12 @@ services:
       --rpccorsdomain '*'
       --rpcvhosts '*'
       --syncmode fast
-      --txpool.pricelimit 0
+      --txpool.pricelimit 1
       --txpool.accountslots 100
-      --txpool.globalslots 100000
+      --txpool.globalslots 200000
       --txpool.accountqueue 200
-      --txpool.globalqueue 100000
+      --txpool.globalqueue 200000
+      --txpool.rejournal 0h30m0s
       --ws
       --wsaddr 0.0.0.0
       --wsapi admin,debug,eth,mining,net,personal,txpool,web3b
