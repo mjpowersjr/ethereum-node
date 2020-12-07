@@ -3,16 +3,14 @@ version: '3.7'
 services:
 
   geth:
-      #--http.addr 0.0.0.0
-      #--http.api admin,debug,eth,mining,net,personal,txpool,web3b
-      #--http.corsdomain '*'
-      #--http.vhosts '*'
-      #--ws.addr 0.0.0.0
-      #--ws.api admin,debug,eth,mining,net,personal,txpool,web3b
       #--ws.origins '*'
       #--gcmode archive
+      #--graphql.addr 0.0.0.0
       #--syncmode full
       #--txlookuplimit 1
+      #--wsaddr 0.0.0.0
+      #--wsapi admin,debug,eth,mining,net,personal,txpool,web3b
+      #--wsorigins '*'
     command: |
       geth 
       --cache 4096
@@ -21,9 +19,12 @@ services:
       --ethash.dagdir "${GETH_DAGDIR}"
       --gcmode archive
       --graphql
-      --graphql.addr 0.0.0.0
       --graphql.corsdomain '*'
       --graphql.vhosts '*'
+      --http.addr 0.0.0.0
+      --http.api admin,debug,eth,mining,net,personal,txpool,web3b
+      --http.corsdomain '*'
+      --http.vhosts '*'
       --maxpeers 100
       --metrics
       --metrics.expensive
@@ -43,10 +44,10 @@ services:
       --txpool.globalqueue 200000
       --txpool.rejournal 0h30m0s
       --ws
-      --wsaddr 0.0.0.0
-      --wsapi admin,debug,eth,mining,net,personal,txpool,web3b
-      --wsorigins '*'
-    image: ethereum/client-go:alltools-v1.9.17
+      --ws.addr 0.0.0.0
+      --ws.api admin,debug,eth,mining,net,personal,txpool,web3b
+      --ws.origins '*'
+    image: ethereum/client-go:alltools-v1.9.24
     ports:
       - "8545:8545"    # rpc
       - "8546:8546"    # websocket
@@ -55,15 +56,16 @@ services:
       - "30303:30303"  # network
     restart: always
     volumes:
-      #- geth-data:/root/.ethereum:rw
       - ${GETH_DAGDIR}:${GETH_DAGDIR}:rw
       - ${GETH_DATADIR}:${GETH_DATADIR}:rw
       - ${GETH_DATADIR_ANCIENT}:${GETH_DATADIR_ANCIENT}:rw
 
   cloudflare-argo-rpc:
     build: ./cloudflared
+    command: --no-autoupdate
     environment:
       - TUNNEL_HOSTNAME=mainnet-rpc.${CLOUDFLARE_HOSTNAME}
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
       - TUNNEL_URL=http://geth:8545
     restart: always
     volumes:
@@ -71,8 +73,10 @@ services:
 
   cloudflare-argo-ws:
     build: ./cloudflared
+    command: --no-autoupdate
     environment:
       - TUNNEL_HOSTNAME=mainnet-ws.${CLOUDFLARE_HOSTNAME}
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
       - TUNNEL_URL=http://geth:8546
     restart: always
     volumes:
@@ -80,9 +84,13 @@ services:
 
   cloudflare-argo-graphql:
     build: ./cloudflared
+    command: --no-autoupdate
+    #command: tunnel --no-autoupdate
+    #image: cloudflare/cloudflared:2020.11.10
     environment:
       - TUNNEL_HOSTNAME=mainnet-graphql.${CLOUDFLARE_HOSTNAME}
-      - TUNNEL_URL=http://geth:8547
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
+      - TUNNEL_URL=http://geth:8545
     restart: always
     volumes:
       - "${CLOUDFLARE_CERT_PATH}:/etc/cloudflared/cert.pem"
@@ -145,6 +153,24 @@ services:
       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
       - /proc:/hostfs/proc:ro
       - /:/hostfs:ro
+
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:7.8.0
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    command: |
+      --e
+      --strict.perms=false
+      -E output.elasticsearch.hosts=["localhost:9200"]
+    user: packetbeat
+    network_mode: host
+    restart: always
+    depends_on:
+      - elasticsearch
+      - kibana
+    volumes:
+      - $PWD/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml:ro
 
 volumes:
 #   logstash-data:
