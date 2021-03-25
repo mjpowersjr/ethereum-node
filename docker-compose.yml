@@ -51,7 +51,6 @@ services:
     ports:
       - "8545:8545"    # rpc
       - "8546:8546"    # websocket
-      - "8547:8547"    # graphql
       - "6060:6060"    # pprof
       - "30303:30303"  # network
     restart: always
@@ -113,22 +112,28 @@ services:
     ports:
       - 9200:9200
 
-#   logstash:
-#     image: docker.elastic.co/logstash/logstash:7.2.0
-#     container_name: logstash
-#     depends_on:
-#       - elasticsearch
-#       - kibana
-#     volumes:
-#       - $PWD/logstash-pipeline/:/usr/share/logstash/pipeline
-#       - $PWD/logstash-templates/:/usr/share/logstash/templates
-#       - logstash-data:/data
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.8.0
+    container_name: logstash
+    depends_on:
+      - elasticsearch
+      - kibana
+    environment:
+      - DISCORD_WEBHOOK
+    restart: always
+    volumes:
+      - $PWD/logstash/pipeline/:/usr/share/logstash/pipeline:ro
+      - $PWD/logstash/templates/:/usr/share/logstash/templates:ro
+        #- $PWD/logstash/logstash.yml/:/usr/share/logstash/config/logstash.yml:ro
+      - logstash-data:/usr/share/logstash/data
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.8.0
     container_name: kibana
     depends_on:
       - elasticsearch
+    environment:
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
     ports:
       - 5601:5601
     restart: always
@@ -173,8 +178,8 @@ services:
       - $PWD/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml:ro
 
 volumes:
-#   logstash-data:
-#     driver: local
+  logstash-data:
+    driver: local
   geth-data:
     driver: local
   elasticsearch-data:

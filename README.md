@@ -21,3 +21,7 @@ EOT
 # reload systemd config
 systemctl daemon-reload
 ```
+
+```
+docker run --network=host --cap-add=NET_ADMIN docker.elastic.co/beats/packetbeat:7.8.0 setup -E setup.kibana.host=localhost:5601 -E output.elasticsearch.hosts=["localhost:9200"]
+```
