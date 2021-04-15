@@ -21,20 +21,19 @@ services:
       --graphql
       --graphql.corsdomain '*'
       --graphql.vhosts '*'
+      --http
       --http.addr 0.0.0.0
       --http.api admin,debug,eth,mining,net,personal,txpool,web3b
       --http.corsdomain '*'
       --http.vhosts '*'
+      --log.json
       --maxpeers 100
       --metrics
       --metrics.expensive
+      --metrics.addr 0.0.0.0
       --nousb
       --pprof
-      --pprofaddr 0.0.0.0
-      --rpc
-      --rpcaddr 0.0.0.0
-      --rpcapi admin,debug,eth,mining,net,personal,txpool,web3b
-      --rpccorsdomain '*'
+      --pprof.addr 0.0.0.0
       --rpcvhosts '*'
       --syncmode fast
       --txpool.pricelimit 1
@@ -47,7 +46,7 @@ services:
       --ws.addr 0.0.0.0
       --ws.api admin,debug,eth,mining,net,personal,txpool,web3b
       --ws.origins '*'
-    image: ethereum/client-go:alltools-v1.9.24
+    image: ethereum/client-go:alltools-v1.10.2
     ports:
       - "8545:8545"    # rpc
       - "8546:8546"    # websocket
